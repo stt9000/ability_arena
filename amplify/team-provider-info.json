@@ -1,0 +1,15 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-abilityarena2-dev-36ecf-authRole",
+      "UnauthRoleArn": "arn:aws:iam::682160081420:role/amplify-abilityarena2-dev-36ecf-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::682160081420:role/amplify-abilityarena2-dev-36ecf-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-abilityarena2-dev-36ecf-deployment",
+      "UnauthRoleName": "amplify-abilityarena2-dev-36ecf-unauthRole",
+      "StackName": "amplify-abilityarena2-dev-36ecf",
+      "StackId": "arn:aws:cloudformation:us-east-1:682160081420:stack/amplify-abilityarena2-dev-36ecf/7824e3a0-2545-11f0-a742-0affc89b6327",
+      "AmplifyAppId": "d2eb4xpl4ndfio"
+    }
+  }
+}
