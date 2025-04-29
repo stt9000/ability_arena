@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ability Arena</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ability Arena</h1>
+            <p>A strategic battle game for two players</p>
+            <button id="showRules">Game Rules</button>
+        </header>
+        
+        <!-- Game Welcome Screen -->
+        <div id="welcomeScreen" class="screen active">
+            <h2>Welcome to Ability Arena!</h2>
+            <div class="form-group">
+                <label for="playerName">Your Name:</label>
+                <input type="text" id="playerName" placeholder="Enter your name">
+            </div>
+            <div class="action-buttons">
+                <button id="createGame" class="btn-large">Create New Game</button>
+                <button id="joinGame" class="btn-large">Join Game</button>
+            </div>
+        </div>
+        
+        <!-- Game Creation Screen -->
+        <div id="createGameScreen" class="screen">
+            <h2>Create New Game</h2>
+            <div class="form-group">
+                <label for="gameId">Game ID (Share this with your opponent):</label>
+                <input type="text" id="gameId" readonly>
+            </div>
+            <div class="loading">
+                <div class="loading-dots">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <span>Waiting for opponent to join...</span>
+            </div>
+            <button id="cancelGame" class="btn-large">Cancel</button>
+        </div>
+        
+        <!-- Join Game Screen -->
+        <div id="joinGameScreen" class="screen">
+            <h2>Join Game</h2>
+            <div class="form-group">
+                <label for="joinGameId">Enter Game ID:</label>
+                <input type="text" id="joinGameId" placeholder="Paste game ID here">
+            </div>
+            <button id="joinGameBtn" class="btn-large">Join</button>
+            <button id="cancelJoin" class="btn-large">Cancel</button>
+        </div>
+        
+        <!-- Ability Selection Screen -->
+        <div id="abilitySelectionScreen" class="screen">
+            <h2>Select Your Abilities</h2>
+            <p>Choose two abilities for battle. Your opponent will not see your choices until both players have selected.</p>
+            
+            <div class="ability-selection">
+                <div class="ability-card" data-ability="bow">
+                    <div class="ability-icon">🏹</div>
+                    <div class="ability-title">Bow and Arrow</div>
+                    <div class="ability-description">Deals 35 damage from up to 2 squares away (non-diagonal). Unlimited uses.</div>
+                </div>
+                
+                <div class="ability-card" data-ability="sword">
+                    <div class="ability-icon">⚔️</div>
+                    <div class="ability-title">Sword</div>
+                    <div class="ability-description">Deals 50 damage to adjacent squares (non-diagonal). Unlimited uses.</div>
+                </div>
+                
+                <div class="ability-card" data-ability="shield">
+                    <div class="ability-icon">🛡️</div>
+                    <div class="ability-title">Shield</div>
+                    <div class="ability-description">Blocks 100% of damage when activated. Can be used during opponent's turn in response to an attack. 3 uses total.</div>
+                </div>
+                
+                <div class="ability-card" data-ability="push">
+                    <div class="ability-icon">👐</div>
+                    <div class="ability-title">Push</div>
+                    <div class="ability-description">Pushes opponent 3 squares in a straight line. If pushed off the board, they lose. Unlimited uses.</div>
+                </div>
+                
+                <div class="ability-card" data-ability="diagonal">
+                    <div class="ability-icon">↗️</div>
+                    <div class="ability-title">Diagonal Moving</div>
+                    <div class="ability-description">Allows diagonal movement. Passive ability, unlimited uses.</div>
+                </div>
+                
+                <div class="ability-card" data-ability="turret">
+                    <div class="ability-icon">🗼</div>
+                    <div class="ability-title">Turret</div>
+                    <div class="ability-description">Places one permanent turret that deals 50 damage to anyone moving adjacent to it. 1 use total. Cannot be used on first turn.</div>
+                </div>
+                
+                <div class="ability-card" data-ability="walls">
+                    <div class="ability-icon">🧱</div>
+                    <div class="ability-title">Walls</div>
+                    <div class="ability-description">Places barriers between squares that prevent movement. 6 uses total.</div>
+                </div>
+                
+                <div class="ability-card" data-ability="blocks">
+                    <div class="ability-icon">⬛</div>
+                    <div class="ability-title">Blocks</div>
+                    <div class="ability-description">Places impassable blocks on squares. 5 uses total. After placing a block, you may pass your next turn.</div>
+                </div>
+            </div>
+            
+            <div class="message" id="abilityMessage" style="display: none;"></div>
+            
+            <button id="confirmAbilities" class="btn-large" disabled>Confirm Abilities (0/2 selected)</button>
+        </div>
+        
+        <!-- Game Board Screen -->
+        <div id="gameScreen" class="screen">
+            <div class="game-section">
+                <div class="sidebar">
+                    <div class="player-info">
+                        <h3 id="player1Name">Player 1</h3>
+                        <div class="health-bar">
+                            <div class="health-fill" id="player1Health"></div>
+                        </div>
+                        <div class="timer" id="player1Timer">Time: 5:00</div>
+                        <div class="abilities" id="player1Abilities"></div>
+                    </div>
+                    
+                    <div class="player-info">
+                        <h3 id="player2Name">Player 2</h3>
+                        <div class="health-bar">
+                            <div class="health-fill" id="player2Health"></div>
+                        </div>
+                        <div class="timer" id="player2Timer">Time: 5:00</div>
+                        <div class="abilities" id="player2Abilities"></div>
+                    </div>
+                    
+                    <div id="actionPanel">
+                        <h3>Current Turn: <span id="currentTurn">Player 1</span></h3>
+                        <div class="action-buttons">
+                            <button id="moveBtn">Move</button>
+                            <button id="useAbilityBtn">Use Ability</button>
+                            <button id="passBtn" disabled>Pass</button>
+                        </div>
+                    </div>
+                    
+                    <div class="game-log">
+                        <div class="log-entry">Game started!</div>
+                    </div>
+                </div>
+                
+                <div class="game-board" id="gameBoard">
+                    <!-- Game cells will be generated with JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rules Modal -->
+        <div id="rulesModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal" id="closeRules">&times;</span>
+                <h2>Ability Arena - Game Rules</h2>
+                
+                <div class="rules-content">
+                    <h3>Game Overview</h3>
+                    <p>Ability Arena is a turn-based strategy game played on a 7×7 grid. Players select special abilities and engage in tactical combat with the goal of eliminating their opponent by reducing their health to zero or pushing them off the board.</p>
+                    
+                    <h3>Setup</h3>
+                    <ul>
+                        <li>Each player secretly chooses two abilities from the available list (these will be revealed only after both players have made their selections)</li>
+                        <li>Player 1 starts on the center square of the first row</li>
+                        <li>Player 2 starts on the center square of the seventh row</li>
+                        <li>Each player begins with 100 health points</li>
+                        <li>Each player has a total of 5 minutes thinking time for the entire game</li>
+                    </ul>
+                    
+                    <h3>Gameplay</h3>
+                    <p>On their turn, a player MUST choose ONE of the following actions:</p>
+                    <ul>
+                        <li>Move their piece one square (orthogonally, or diagonally if they have the Diagonal Moving ability)</li>
+                        <li>Use one of their chosen abilities</li>
+                    </ul>
+                    <p>Exception: If a player just placed a Block on their previous turn, they may choose to pass their turn without moving or using an ability.</p>
+                    
+                    <h3>Abilities</h3>
+                    <ul>
+                        <li><strong>Bow and Arrow:</strong> Deals 35 damage to opponent if they are within 2 squares (non-diagonal). Unlimited uses.</li>
+                        <li><strong>Sword:</strong> Deals 50 damage to opponent if they are in an adjacent square (non-diagonal). Unlimited uses.</li>
+                        <li><strong>Shield:</strong> Completely blocks any damage when activated. Can be used during the opponent's turn in response to an attack. Limited to 3 uses total throughout the game.</li>
+                        <li><strong>Push:</strong> Pushes opponent 3 squares in a straight line. If this pushes them off the board, they are eliminated. Unlimited uses.</li>
+                        <li><strong>Diagonal Moving:</strong> Passive ability that allows diagonal movement. Unlimited uses.</li>
+                        <li><strong>Turret:</strong> Places a permanent turret on any empty square. The turret deals 50 damage to any player who moves into any square adjacent to it. Cannot be used on the first turn. Limited to 1 use total.</li>
+                        <li><strong>Walls:</strong> Places a wall between two adjacent squares. Walls prevent movement between those squares. Limited to 6 uses total.</li>
+                        <li><strong>Blocks:</strong> Places a block on any empty square. Blocks make the square impassable. Limited to 5 uses total.</li>
+                    </ul>
+                    
+                    <h3>Winning the Game</h3>
+                    <p>A player wins by:</p>
+                    <ol>
+                        <li>Reducing their opponent's health points to 0 or below.</li>
+                        <li>Pushing their opponent off the board.</li>
+                        <li>If their opponent runs out of their 5-minute time allocation.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game Over Modal -->
+        <div id="gameOverModal" class="modal">
+            <div class="modal-content game-over-modal">
+                <h2>Game Over!</h2>
+                <div class="winner" id="winnerDisplay"></div>
+                <button id="playAgain" class="btn-large">Play Again</button>
+                <button id="returnToLobby" class="btn-large">Return to Lobby</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Load scripts in the correct order -->
+    <script type="module" src="js/main.js"></script>
+    
+    <!-- Shield Activation Modal -->
+<div id="shieldModal" class="modal">
+    <div class="modal-content shield-modal">
+        <h2>Shield Activation</h2>
+        <p id="shieldMessage">You are about to take damage! Use your shield?</p>
+        <p id="shieldUsesRemaining">Shield uses remaining: <span id="shieldCountDisplay">0</span></p>
+        <div class="shield-actions">
+            <button id="useShield" class="btn-large">Yes, Use Shield</button>
+            <button id="declineShield" class="btn-large">No, Take Damage</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

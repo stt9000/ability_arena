@@ -1,0 +1,22 @@
+{
+  "name": "ability-arena",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "lite-server --baseDir=\"src\"",
+    "dev": "lite-server",
+    "build": "npm run clean && npm run copy-assets",
+    "clean": "rimraf dist",
+    "copy-assets": "cpx \"src/**/*\" dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "lite-server": "^2.6.1",
+    "cpx": "^1.5.0",
+    "rimraf": "^3.0.2"
+  }
+}
