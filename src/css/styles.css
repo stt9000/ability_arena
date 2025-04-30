@@ -786,3 +786,11 @@ button:disabled {
 #passBtn {
     display: none !important;
 }
+
+#moveBtn, #useAbilityBtn {
+    display: none !important;
+}
+
+.game-log {
+    display: none !important;
+}
