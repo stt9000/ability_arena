@@ -1031,37 +1031,44 @@ case 'walls':
         return; // Exit without placing a wall
     }
 
-    // Log the current state before modifying
-    console.log('Wall state before placement:', {
-        currentCell: { ...gameState.board[wallPosition.row][wallPosition.col].wall },
-        adjacentCells: {
-            top: wallPosition.row > 0 ? { ...gameState.board[wallPosition.row - 1][wallPosition.col].wall } : 'edge',
-            right: wallPosition.col < 6 ? { ...gameState.board[wallPosition.row][wallPosition.col + 1].wall } : 'edge',
-            bottom: wallPosition.row < 6 ? { ...gameState.board[wallPosition.row + 1][wallPosition.col].wall } : 'edge',
-            left: wallPosition.col > 0 ? { ...gameState.board[wallPosition.row][wallPosition.col - 1].wall } : 'edge'
-        }
-    });
-
-    // Update wall in game state
+    // Temporarily place the wall
     gameState.board[wallPosition.row][wallPosition.col].wall[wallPosition.side] = true;
-    console.log(`%c[WALL DEBUG] Set wall ${wallPosition.side} to true for cell (${wallPosition.row},${wallPosition.col})`, 'color: red; font-weight: bold;');
-
-    // Also update adjacent cell's wall
+    
+    // Update adjacent cell's wall
     if (wallPosition.side === 'top' && wallPosition.row > 0) {
         gameState.board[wallPosition.row - 1][wallPosition.col].wall.bottom = true;
-        console.log(`%c[WALL DEBUG] Set wall bottom to true for adjacent cell (${wallPosition.row - 1},${wallPosition.col})`, 'color: red; font-weight: bold;');
     }
     if (wallPosition.side === 'right' && wallPosition.col < 6) {
         gameState.board[wallPosition.row][wallPosition.col + 1].wall.left = true;
-        console.log(`%c[WALL DEBUG] Set wall left to true for adjacent cell (${wallPosition.row},${wallPosition.col + 1})`, 'color: red; font-weight: bold;');
     }
     if (wallPosition.side === 'bottom' && wallPosition.row < 6) {
         gameState.board[wallPosition.row + 1][wallPosition.col].wall.top = true;
-        console.log(`%c[WALL DEBUG] Set wall top to true for adjacent cell (${wallPosition.row + 1},${wallPosition.col})`, 'color: red; font-weight: bold;');
     }
     if (wallPosition.side === 'left' && wallPosition.col > 0) {
         gameState.board[wallPosition.row][wallPosition.col - 1].wall.right = true;
-        console.log(`%c[WALL DEBUG] Set wall right to true for adjacent cell (${wallPosition.row},${wallPosition.col - 1})`, 'color: red; font-weight: bold;');
+    }
+
+    // Check if this wall placement would separate players
+    if (!hasPathBetweenPlayers()) {
+        // Remove the wall if it would separate players
+        gameState.board[wallPosition.row][wallPosition.col].wall[wallPosition.side] = false;
+        
+        // Remove adjacent cell's wall
+        if (wallPosition.side === 'top' && wallPosition.row > 0) {
+            gameState.board[wallPosition.row - 1][wallPosition.col].wall.bottom = false;
+        }
+        if (wallPosition.side === 'right' && wallPosition.col < 6) {
+            gameState.board[wallPosition.row][wallPosition.col + 1].wall.left = false;
+        }
+        if (wallPosition.side === 'bottom' && wallPosition.row < 6) {
+            gameState.board[wallPosition.row + 1][wallPosition.col].wall.top = false;
+        }
+        if (wallPosition.side === 'left' && wallPosition.col > 0) {
+            gameState.board[wallPosition.row][wallPosition.col - 1].wall.right = false;
+        }
+        
+        alert('Invalid wall placement: This would permanently separate the players!');
+        return;
     }
 
     gameState.players[currentPlayer].abilitiesUsed.walls++;
@@ -1069,24 +1076,20 @@ case 'walls':
     
     // Force immediate rendering update to show the wall
     renderGameBoard();
-    
-    // Log the state after wall placement
-    console.log('Wall state after placement:', {
-        currentCell: { ...gameState.board[wallPosition.row][wallPosition.col].wall },
-        adjacentCells: {
-            top: wallPosition.row > 0 ? { ...gameState.board[wallPosition.row - 1][wallPosition.col].wall } : 'edge',
-            right: wallPosition.col < 6 ? { ...gameState.board[wallPosition.row][wallPosition.col + 1].wall } : 'edge',
-            bottom: wallPosition.row < 6 ? { ...gameState.board[wallPosition.row + 1][wallPosition.col].wall } : 'edge',
-            left: wallPosition.col > 0 ? { ...gameState.board[wallPosition.row][wallPosition.col - 1].wall } : 'edge'
-        }
-    });
-    
-    console.log(`%c[WALL DEBUG] Wall placement completed successfully`, 'color: red; font-weight: bold;');
     break;
 
         case 'blocks':
-            // Place a block
+            // Temporarily place the block
             gameState.board[params.row][params.col].block = true;
+            
+            // Check if this block placement would separate players
+            if (!hasPathBetweenPlayers()) {
+                // Remove the block if it would separate players
+                gameState.board[params.row][params.col].block = false;
+                alert('Invalid block placement: This would permanently separate the players!');
+                return;
+            }
+            
             gameState.players[currentPlayer].abilitiesUsed.blocks++;
             gameState.players[currentPlayer].lastPlacedBlock = true;
             addLogMessage(`${gameState.players[currentPlayer].name} placed a block at (${params.row},${params.col})!`);
@@ -1264,6 +1267,64 @@ function handleCellClick(row, col) {
             updateAbilityButtonHandlers();
         }
     }
+}
+
+// Function to check if a path exists between players
+function hasPathBetweenPlayers() {
+    const player1Pos = gameState.players[1].position;
+    const player2Pos = gameState.players[2].position;
+    
+    // Create a visited array to track explored cells
+    const visited = Array(7).fill().map(() => Array(7).fill(false));
+    
+    // DFS function to explore possible paths
+    function dfs(row, col) {
+        // Check if we've reached player 2
+        if (row === player2Pos.row && col === player2Pos.col) {
+            return true;
+        }
+        
+        // Mark current cell as visited
+        visited[row][col] = true;
+        
+        // Check all four directions
+        const directions = [
+            { row: -1, col: 0 }, // up
+            { row: 1, col: 0 },  // down
+            { row: 0, col: -1 }, // left
+            { row: 0, col: 1 }   // right
+        ];
+        
+        for (const dir of directions) {
+            const newRow = row + dir.row;
+            const newCol = col + dir.col;
+            
+            // Check if new position is valid
+            if (newRow >= 0 && newRow < 7 && newCol >= 0 && newCol < 7) {
+                // Skip if already visited
+                if (visited[newRow][newCol]) continue;
+                
+                // Skip if blocked
+                if (gameState.board[newRow][newCol].block) continue;
+                
+                // Check for walls
+                if (dir.row === -1 && gameState.board[row][col].wall.top) continue;
+                if (dir.row === 1 && gameState.board[row][col].wall.bottom) continue;
+                if (dir.col === -1 && gameState.board[row][col].wall.left) continue;
+                if (dir.col === 1 && gameState.board[row][col].wall.right) continue;
+                
+                // Recursively check if path exists
+                if (dfs(newRow, newCol)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    // Start DFS from player 1's position
+    return dfs(player1Pos.row, player1Pos.col);
 }
 
 // At the end of game-logic.js, add to your exports:

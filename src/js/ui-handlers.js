@@ -281,13 +281,22 @@ function setupEventListeners() {
         if (playerNumber === 1) {
             // Clear the name input for player 2
             inputs.playerName.value = '';
-            // Show a message for player 2
-            const message = document.createElement('div');
-            message.className = 'message';
-            message.textContent = 'Player 2, please enter your name and select abilities';
-            document.getElementById('abilitySelectionScreen').insertBefore(message, document.querySelector('.ability-cards'));
-            // Show ability selection screen again
-            showScreen('abilitySelection');
+            // Show welcome screen for player 2
+            showScreen('welcome');
+            // Update welcome screen message
+            document.querySelector('#welcomeScreen h2').textContent = 'Player 2, Enter Your Name';
+            // Hide create game button and only show join game
+            document.getElementById('createGame').style.display = 'none';
+            document.getElementById('joinGame').textContent = 'Continue';
+            // Update join game button handler
+            buttons.joinGame.onclick = function() {
+                if (inputs.playerName.value.trim() === '') {
+                    alert('Please enter your name!');
+                    return;
+                }
+                gameState.players[2].name = inputs.playerName.value.trim();
+                showScreen('abilitySelection');
+            };
             return;
         }
         
