@@ -1201,65 +1201,16 @@ document.getElementById('winnerDisplay').textContent = "Game over!";
 }
 
 function handlePlayerClick(row, col) {
-const currentPlayer = gameState.currentTurn;
-const currentPos = gameState.players[currentPlayer].position;
-
-// If we're clicking on our own piece and we're already in move mode
-if (row === currentPos.row && col === currentPos.col && gameState.currentAction === 'move') {
-// Clear highlights and reset state
-document.querySelectorAll('.cell.highlight').forEach(cell => {
-cell.classList.remove('highlight');
-});
-gameState.currentAction = 'none';
-return;
-}
-
-// Clear any existing highlights
-document.querySelectorAll('.cell.highlight').forEach(cell => {
-cell.classList.remove('highlight');
-});
-
-// If we're in move mode or no action is selected, we should highlight moves
-if (gameState.currentAction === 'none' || gameState.currentAction === 'move') {
-gameState.currentAction = 'move';
-
-// Highlight valid moves
-const directions = [
-{ row: -1, col: 0 },  // up
-{ row: 1, col: 0 },   // down
-{ row: 0, col: -1 },  // left
-{ row: 0, col: 1 }    // right
-];
-
-directions.forEach(dir => {
-const newRow = currentPos.row + dir.row;
-const newCol = currentPos.col + dir.col;
-
-// Check if within bounds
-if (newRow >= 0 && newRow < 7 && newCol >= 0 && newCol < 7) {
-// Check if cell is empty or has a block
-if (!gameState.board[newRow][newCol].block) {
-    // Check for walls
-    if (dir.row === -1 && !gameState.board[currentPos.row][currentPos.col].wall.top) {
-        const cell = document.querySelector(`.cell[data-row="${newRow}"][data-col="${newCol}"]`);
-        if (cell) cell.classList.add('highlight');
+    const currentPlayer = gameState.currentTurn;
+    const currentPos = gameState.players[currentPlayer].position;
+    
+    // If clicking on current position, start move
+    if (row === currentPos.row && col === currentPos.col) {
+        gameState.currentAction = 'move';
+        
+        // Highlight valid moves
+        highlightPossibleMoves();
     }
-    if (dir.row === 1 && !gameState.board[currentPos.row][currentPos.col].wall.bottom) {
-        const cell = document.querySelector(`.cell[data-row="${newRow}"][data-col="${newCol}"]`);
-        if (cell) cell.classList.add('highlight');
-    }
-    if (dir.col === -1 && !gameState.board[currentPos.row][currentPos.col].wall.left) {
-        const cell = document.querySelector(`.cell[data-row="${newRow}"][data-col="${newCol}"]`);
-        if (cell) cell.classList.add('highlight');
-    }
-    if (dir.col === 1 && !gameState.board[currentPos.row][currentPos.col].wall.right) {
-        const cell = document.querySelector(`.cell[data-row="${newRow}"][data-col="${newCol}"]`);
-        if (cell) cell.classList.add('highlight');
-    }
-}
-}
-});
-}
 }
 
 function handleCellClick(row, col) {
@@ -1297,25 +1248,13 @@ function handleCellClick(row, col) {
     if (gameState.currentAction === 'move') {
         const currentPlayer = gameState.currentTurn;
         const currentPos = gameState.players[currentPlayer].position;
-        const distance = Math.abs(row - currentPos.row) + Math.abs(col - currentPos.col);
+        const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
         
-        if (distance === 1 && !gameState.board[row][col].block) {
-            // Check for walls
-            const dirRow = row - currentPos.row;
-            const dirCol = col - currentPos.col;
-            
-            let canMove = true;
-            if (dirRow === -1 && gameState.board[currentPos.row][currentPos.col].wall.top) canMove = false;
-            if (dirRow === 1 && gameState.board[currentPos.row][currentPos.col].wall.bottom) canMove = false;
-            if (dirCol === -1 && gameState.board[currentPos.row][currentPos.col].wall.left) canMove = false;
-            if (dirCol === 1 && gameState.board[currentPos.row][currentPos.col].wall.right) canMove = false;
-            
-            if (canMove) {
-                movePlayer(row, col);
-                gameState.currentAction = 'none';
-                renderGameBoard();
-                updateAbilityButtonHandlers();
-            }
+        if (cell && cell.classList.contains('highlight')) {
+            movePlayer(row, col);
+            gameState.currentAction = 'none';
+            renderGameBoard();
+            updateAbilityButtonHandlers();
         }
     }
 }

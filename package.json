@@ -6,8 +6,8 @@
     "start": "lite-server --baseDir=\"src\"",
     "dev": "lite-server",
     "build": "npm run clean && npm run copy-assets",
-    "clean": "rimraf dist",
-    "copy-assets": "cpx \"src/**/*\" dist",
+    "clean": "if exist dist rmdir /s /q dist && mkdir dist",
+    "copy-assets": "xcopy /E /I /Y src\\* dist\\",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
