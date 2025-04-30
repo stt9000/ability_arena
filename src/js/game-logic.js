@@ -160,6 +160,12 @@ function renderGameBoard() {
             if (gameState.board[i][j].turret) {
                 const turret = document.createElement('div');
                 turret.className = 'turret';
+                // Add player-specific class based on turret owner
+                if (gameState.board[i][j].turretOwner === 1) {
+                    turret.classList.add('player-1');
+                } else if (gameState.board[i][j].turretOwner === 2) {
+                    turret.classList.add('player-2');
+                }
                 cell.appendChild(turret);
             }
             
@@ -294,13 +300,14 @@ function updateUI() {
     
     // Update ability buttons
     updateAbilityButtons();
-    //if (window.updateAbilityButtonHandlers) {
-    //    window.updateAbilityButtonHandlers();
-    //}
     updateAbilityButtonHandlers();
     
-    // Enable/disable pass button
-    document.getElementById('passBtn').disabled = !(gameState.players[gameState.currentTurn].lastPlacedBlock);
+    // Enable/disable pass button based on shield usage
+    const passBtn = document.getElementById('passBtn');
+    if (passBtn) {
+        const currentPlayer = gameState.currentTurn;
+        passBtn.style.display = gameState.players[currentPlayer].lastUsedShield ? 'block' : 'none';
+    }
 }
 
 // Update ability buttons in the UI
@@ -602,10 +609,6 @@ function hasLineOfSight(pos1, pos2) {
     // If we get here, there's a clear line of sight
     return true;
 }
-
-// Highlight valid targets for the selected ability
-// Find the highlightAbilityTargets function in game-logic.js 
-// and replace it with this fixed version:
 
 // Highlight valid targets for the selected ability
 function highlightAbilityTargets(ability) {
@@ -1005,6 +1008,8 @@ function useAbility(ability, params) {
             gameState.board[params.row][params.col].turretOwner = currentPlayer; // Add owner info
             gameState.players[currentPlayer].abilitiesUsed.turret++;
             addLogMessage(`${gameState.players[currentPlayer].name} placed a turret at (${params.row},${params.col})!`);
+            // Force immediate rendering update to show the turret
+            renderGameBoard();
             break;
 
         // Find the case for 'walls' in the useAbility function in game-logic.js
@@ -1188,9 +1193,7 @@ return true;
 }
 
 return false;
-}
-
-// Show the game over modal
+}// Show the game over modal
 function showGameOverModal() {
 modals.gameOver.style.display = 'block';
 if (gameState.winner) {
@@ -1228,18 +1231,22 @@ function handleCellClick(row, col) {
             } else {
                 // All other abilities
                 useAbility(ability, { row, col });
+                
+                // Reset UI state
+                gameState.currentAction = 'none';
+                document.querySelectorAll('.cell.highlight').forEach(cell => cell.classList.remove('highlight'));
+                const currentPlayer = gameState.currentTurn;
+                const abilitiesContainer = document.getElementById(`player${currentPlayer}Abilities`);
+                if (abilitiesContainer) {
+                    const abilityButtons = abilitiesContainer.querySelectorAll('.ability');
+                    abilityButtons.forEach(btn => btn.classList.remove('selected'));
+                }
+                if (window.buttons) window.buttons.useAbility.textContent = 'Use Ability';
+                
+                // Update UI and ability buttons for the new turn
+                renderGameBoard();
+                updateAbilityButtonHandlers();
             }
-            
-            // Reset UI state
-            gameState.currentAction = 'none';
-            document.querySelectorAll('.cell.highlight').forEach(cell => cell.classList.remove('highlight'));
-            const currentPlayer = gameState.currentTurn;
-            const abilitiesContainer = document.getElementById(`player${currentPlayer}Abilities`);
-            if (abilitiesContainer) {
-                const abilityButtons = abilitiesContainer.querySelectorAll('.ability');
-                abilityButtons.forEach(btn => btn.classList.remove('selected'));
-            }
-            if (window.buttons) window.buttons.useAbility.textContent = 'Use Ability';
             return;
         }
     }
@@ -1280,3 +1287,6 @@ export {
     handlePlayerClick,
     handleCellClick
 };
+
+
+

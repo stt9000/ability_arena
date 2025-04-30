@@ -37,7 +37,8 @@ export function initGameState() {
                     blocks: 0
                 },
                 timeRemaining: 300, // 5 minutes in seconds
-                lastPlacedBlock: false
+                lastPlacedBlock: false,
+                lastUsedShield: false
             },
             2: {
                 name: "",
@@ -51,7 +52,8 @@ export function initGameState() {
                     blocks: 0
                 },
                 timeRemaining: 300,
-                lastPlacedBlock: false
+                lastPlacedBlock: false,
+                lastUsedShield: false
             }
         },
         currentTurn: 1,
@@ -159,6 +161,8 @@ export function resetGameState(gameState) {
     gameState.players[2].timeRemaining = 300;
     gameState.players[1].lastPlacedBlock = false;
     gameState.players[2].lastPlacedBlock = false;
+    gameState.players[1].lastUsedShield = false;
+    gameState.players[2].lastUsedShield = false;
     gameState.currentTurn = 1;
     gameState.currentAction = 'none';
     gameState.board = createEmptyBoard();

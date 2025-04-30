@@ -195,16 +195,9 @@ function setupEventListeners() {
         }
         
         gameState.players[1].name = inputs.playerName.value.trim();
-        gameState.gameId = generateGameId();
-        inputs.gameId.value = gameState.gameId;
-        showScreen('createGame');
         
-        // In a real implementation, this would connect to a server
-        // For demo purposes, we'll simulate player 2 joining after a short delay
-        setTimeout(() => {
-            gameState.players[2].name = "Opponent";
-            showScreen('abilitySelection');
-        }, 2000);
+        // Show ability selection screen for player 1
+        showScreen('abilitySelection');
     });
     
     buttons.joinGame.addEventListener('click', function() {
@@ -233,8 +226,7 @@ function setupEventListeners() {
         gameState.players[2].name = inputs.playerName.value.trim();
         gameState.gameId = inputs.joinGameId.value.trim();
         
-        // In a real implementation, this would validate the game ID with a server
-        // For demo purposes, we'll proceed directly to ability selection
+        // Show ability selection screen for player 2
         showScreen('abilitySelection');
     });
 
@@ -281,46 +273,39 @@ function setupEventListeners() {
         const playerNumber = gameState.players[2].name === inputs.playerName.value.trim() ? 2 : 1;
         gameState.players[playerNumber].abilities = [...selectedAbilities];
         
-        // In a real implementation, this would wait for the other player
-        // For demo purposes, we'll simulate the other player's selection if needed
-        if (playerNumber === 1) {
-            // Pick two random abilities for player 2
-            const availableAbilities = ['bow', 'sword', 'shield', 'push', 'diagonal', 'turret', 'walls', 'blocks'];
-            gameState.players[2].abilities = [];
-            while (gameState.players[2].abilities.length < 2) {
-                const randomIndex = Math.floor(Math.random() * availableAbilities.length);
-                const ability = availableAbilities[randomIndex];
-                if (!gameState.players[2].abilities.includes(ability)) {
-                    gameState.players[2].abilities.push(ability);
-                }
-            }
-        } else {
-            // Pick two random abilities for player 1
-            const availableAbilities = ['bow', 'sword', 'shield', 'push', 'diagonal', 'turret', 'walls', 'blocks'];
-            gameState.players[1].abilities = [];
-            while (gameState.players[1].abilities.length < 2) {
-                const randomIndex = Math.floor(Math.random() * availableAbilities.length);
-                const ability = availableAbilities[randomIndex];
-                if (!gameState.players[1].abilities.includes(ability)) {
-                    gameState.players[1].abilities.push(ability);
-                }
-            }
-        }
-        
         // Reset selection for next time
         selectedAbilities = [];
         abilityCards.forEach(card => card.classList.remove('selected'));
         
-        // Start the game
+        // If this is player 1, show player 2's name input
+        if (playerNumber === 1) {
+            // Clear the name input for player 2
+            inputs.playerName.value = '';
+            // Show a message for player 2
+            const message = document.createElement('div');
+            message.className = 'message';
+            message.textContent = 'Player 2, please enter your name and select abilities';
+            document.getElementById('abilitySelectionScreen').insertBefore(message, document.querySelector('.ability-cards'));
+            // Show ability selection screen again
+            showScreen('abilitySelection');
+            return;
+        }
+        
+        // If this is player 2, start the game immediately
         showScreen('game');
         renderGameBoard();
-        addLogMessage(`Game started! ${gameState.players[1].name} vs ${gameState.players[2].name}`);
+        updateUI();
+        startTimer();
+        
+        // Add initial log messages
+        addLogMessage(`${gameState.players[1].name} vs ${gameState.players[2].name}`);
         addLogMessage(`${gameState.players[1].name} chose: ${gameState.players[1].abilities.map(getAbilityName).join(', ')}`);
         addLogMessage(`${gameState.players[2].name} chose: ${gameState.players[2].abilities.map(getAbilityName).join(', ')}`);
         addLogMessage(`${gameState.players[gameState.currentTurn].name} goes first!`);
         
-        // Start the timer for the current player
-        startTimer();
+        // Enable action buttons
+        buttons.move.disabled = false;
+        buttons.useAbility.disabled = false;
         
         // Set up ability button handlers
         setupAbilityButtonHandlers();
@@ -410,12 +395,13 @@ function setupEventListeners() {
         cleanupWallSelectors();
         
         const currentPlayer = gameState.currentTurn;
-        if (!gameState.players[currentPlayer].lastPlacedBlock) {
-            alert('You can only pass after placing a block!');
+        if (!gameState.players[currentPlayer].lastUsedShield) {
+            alert('You can only pass after using a shield to block an attack!');
             return;
         }
         
         addLogMessage(`${gameState.players[currentPlayer].name} passed their turn.`);
+        gameState.players[currentPlayer].lastUsedShield = false;  // Reset the flag after passing
         switchTurn();
         
         // Update ability button handlers for new player
@@ -547,6 +533,7 @@ function setupEventListeners() {
         
         // Use shield ability
         gameState.players[targetPlayer].abilitiesUsed.shield++;
+        gameState.players[targetPlayer].lastUsedShield = true;  // Set the flag when shield is used
         addLogMessage(`${gameState.players[targetPlayer].name} activated their shield and blocked ${gameState.pendingDamage.amount} damage!`);
         
         // Close shield modal
