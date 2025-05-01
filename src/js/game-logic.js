@@ -319,6 +319,7 @@ function updateAbilityButtons() {
     player1Abilities.innerHTML = '';
     player2Abilities.innerHTML = '';
     
+    // Add abilities for player 1
     gameState.players[1].abilities.forEach(ability => {
         const abilityBtn = document.createElement('div');
         abilityBtn.className = 'ability';
@@ -333,9 +334,15 @@ function updateAbilityButtons() {
             }
         }
     
+        // Disable button if it's not player 1's turn
+        if (gameState.currentTurn !== 1) {
+            abilityBtn.classList.add('disabled');
+        }
+    
         abilityBtn.addEventListener('click', function() {
             if (gameState.gameOver) return;
             if (abilityBtn.classList.contains('disabled')) return;
+            if (gameState.currentTurn !== 1) return; // Additional check for current turn
     
             // If already selected, deselect and reset
             if (abilityBtn.classList.contains('selected')) {
@@ -373,7 +380,7 @@ function updateAbilityButtons() {
         player1Abilities.appendChild(abilityBtn);
     });
     
-    // Same for player 2
+    // Add abilities for player 2
     gameState.players[2].abilities.forEach(ability => {
         const abilityBtn = document.createElement('div');
         abilityBtn.className = 'ability';
@@ -388,9 +395,15 @@ function updateAbilityButtons() {
             }
         }
     
+        // Disable button if it's not player 2's turn
+        if (gameState.currentTurn !== 2) {
+            abilityBtn.classList.add('disabled');
+        }
+    
         abilityBtn.addEventListener('click', function() {
             if (gameState.gameOver) return;
             if (abilityBtn.classList.contains('disabled')) return;
+            if (gameState.currentTurn !== 2) return; // Additional check for current turn
     
             // If already selected, deselect and reset
             if (abilityBtn.classList.contains('selected')) {
@@ -1037,9 +1050,19 @@ function useAbility(ability, params) {
             break;
 
         case 'turret':
-            // Place a turret and store its owner
+            // Temporarily place the turret
             gameState.board[params.row][params.col].turret = true;
-            gameState.board[params.row][params.col].turretOwner = currentPlayer; // Add owner info
+            gameState.board[params.row][params.col].turretOwner = currentPlayer;
+            
+            // Check if this turret placement would separate players
+            if (!hasPathBetweenPlayers()) {
+                // Remove the turret if it would separate players
+                gameState.board[params.row][params.col].turret = false;
+                gameState.board[params.row][params.col].turretOwner = null;
+                showValidationModal('Invalid turret placement: This would permanently separate the players!');
+                return;
+            }
+            
             gameState.players[currentPlayer].abilitiesUsed.turret++;
             addLogMessage(`${gameState.players[currentPlayer].name} placed a turret at (${params.row},${params.col})!`);
             // Force immediate rendering update to show the turret
@@ -1344,8 +1367,8 @@ function hasPathBetweenPlayers() {
                 // Skip if already visited
                 if (visited[newRow][newCol]) continue;
                 
-                // Skip if blocked
-                if (gameState.board[newRow][newCol].block) continue;
+                // Skip if blocked by block or turret
+                if (gameState.board[newRow][newCol].block || gameState.board[newRow][newCol].turret) continue;
                 
                 // Check for walls
                 if (dir.row === -1 && gameState.board[row][col].wall.top) continue;
