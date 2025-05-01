@@ -468,6 +468,9 @@ function highlightPossibleMoves() {
             // Check for blocks
             if (gameState.board[newRow][newCol].block) return;
             
+            // Check for turrets
+            if (gameState.board[newRow][newCol].turret) return;
+            
             // Check for players
             if ((gameState.players[1].position.row === newRow && gameState.players[1].position.col === newCol) ||
                 (gameState.players[2].position.row === newRow && gameState.players[2].position.col === newCol)) {
@@ -820,37 +823,39 @@ function checkTurretDamage() {
         if (checkRow >= 0 && checkRow < 7 && checkCol >= 0 && checkCol < 7) {
             // Check for turret
             if (gameState.board[checkRow][checkCol].turret) {
+                // Get the turret owner
+                const turretOwner = gameState.board[checkRow][checkCol].turretOwner;
+                
                 // Only take damage if the turret belongs to the opponent
-                // We can determine this by checking when the turret was placed
-                // If the board square has a turret and it's not the current player's turret,
-                // then it must be the opponent's
-                
-// Get the turret owner (default to opponent for existing turrets)
-const turretOwner = gameState.board[checkRow][checkCol].turretOwner || opponentNum;
-                
-// Only take damage if the turret belongs to the opponent
-if (turretOwner !== currentPlayer) {
-    turretFound = true;
-    const turretDamage = gameState.players[turretOwner].abilities.includes('turret') ? 50 : 50; // Default damage value
+                if (turretOwner === opponentNum) {
+                    // Check if there's a clear line of sight between turret and player
+                    const turretPos = { row: checkRow, col: checkCol };
+                    if (hasLineOfSight(turretPos, position)) {
+                        turretFound = true;
+                        const turretDamage = 50; // Fixed damage value
+                        
+                        // Check for shield option
+                        const shieldUsed = applyDamageWithShieldOption(
+                            currentPlayer, 
+                            turretDamage, 
+                            `${gameState.players[turretOwner].name}'s turret`
+                        );
+                        
+                        // If shield is being processed, we'll handle game over checking later
+                        if (!shieldUsed) {
+                            // Check for game over
+                            checkGameOver();
+                        }
+                    } else {
+                        // Log that the turret's line of sight is blocked
+                        addLogMessage(`${gameState.players[turretOwner].name}'s turret's line of sight is blocked by a wall!`);
+                    }
+                }
+            }
+        }
+    });
     
-    // Check for shield option
-    const shieldUsed = applyDamageWithShieldOption(
-        currentPlayer, 
-        turretDamage, 
-        `${gameState.players[turretOwner].name}'s turret`
-    );
-    
-    // If shield is being processed, we'll handle game over checking later
-    if (!shieldUsed) {
-        // Check for game over
-        checkGameOver();
-    }
-}
-}
-}
-});
-
-return turretFound;
+    return turretFound;
 }
 
 // Add this damage handling function with shield option
@@ -889,7 +894,6 @@ checkGameOver();
 return false; // Indicates damage was applied immediately
 }
 
-// Use an ability with optional parameters
 // Use an ability with optional parameters
 function useAbility(ability, params) {
     const currentPlayer = gameState.currentTurn;
@@ -1012,71 +1016,68 @@ function useAbility(ability, params) {
             renderGameBoard();
             break;
 
-        // Find the case for 'walls' in the useAbility function in game-logic.js
-// and replace it with this version that has additional debugging
+        case 'walls':
+            // Place a wall
+            console.log(`%c[WALL DEBUG] useAbility called for wall at (${params.row},${params.col}) on side: ${params.side}`, 'color: red; font-weight: bold;');
+            
+            const wallPosition = {
+                row: params.row,
+                col: params.col,
+                side: params.side // top, right, bottom, left
+            };
 
-case 'walls':
-    // Place a wall
-    console.log(`%c[WALL DEBUG] useAbility called for wall at (${params.row},${params.col}) on side: ${params.side}`, 'color: red; font-weight: bold;');
-    
-    const wallPosition = {
-        row: params.row,
-        col: params.col,
-        side: params.side // top, right, bottom, left
-    };
+            // ⚠️ CRITICAL CHANGE: Don't auto-select a side if none provided
+            if (!wallPosition.side) {
+                console.log(`%c[WALL DEBUG] No side provided for wall placement! Canceling wall placement.`, 'color: red; font-weight: bold;');
+                return; // Exit without placing a wall
+            }
 
-    // ⚠️ CRITICAL CHANGE: Don't auto-select a side if none provided
-    if (!wallPosition.side) {
-        console.log(`%c[WALL DEBUG] No side provided for wall placement! Canceling wall placement.`, 'color: red; font-weight: bold;');
-        return; // Exit without placing a wall
-    }
+            // Temporarily place the wall
+            gameState.board[wallPosition.row][wallPosition.col].wall[wallPosition.side] = true;
+            
+            // Update adjacent cell's wall
+            if (wallPosition.side === 'top' && wallPosition.row > 0) {
+                gameState.board[wallPosition.row - 1][wallPosition.col].wall.bottom = true;
+            }
+            if (wallPosition.side === 'right' && wallPosition.col < 6) {
+                gameState.board[wallPosition.row][wallPosition.col + 1].wall.left = true;
+            }
+            if (wallPosition.side === 'bottom' && wallPosition.row < 6) {
+                gameState.board[wallPosition.row + 1][wallPosition.col].wall.top = true;
+            }
+            if (wallPosition.side === 'left' && wallPosition.col > 0) {
+                gameState.board[wallPosition.row][wallPosition.col - 1].wall.right = true;
+            }
 
-    // Temporarily place the wall
-    gameState.board[wallPosition.row][wallPosition.col].wall[wallPosition.side] = true;
-    
-    // Update adjacent cell's wall
-    if (wallPosition.side === 'top' && wallPosition.row > 0) {
-        gameState.board[wallPosition.row - 1][wallPosition.col].wall.bottom = true;
-    }
-    if (wallPosition.side === 'right' && wallPosition.col < 6) {
-        gameState.board[wallPosition.row][wallPosition.col + 1].wall.left = true;
-    }
-    if (wallPosition.side === 'bottom' && wallPosition.row < 6) {
-        gameState.board[wallPosition.row + 1][wallPosition.col].wall.top = true;
-    }
-    if (wallPosition.side === 'left' && wallPosition.col > 0) {
-        gameState.board[wallPosition.row][wallPosition.col - 1].wall.right = true;
-    }
+            // Check if this wall placement would separate players
+            if (!hasPathBetweenPlayers()) {
+                // Remove the wall if it would separate players
+                gameState.board[wallPosition.row][wallPosition.col].wall[wallPosition.side] = false;
+                
+                // Remove adjacent cell's wall
+                if (wallPosition.side === 'top' && wallPosition.row > 0) {
+                    gameState.board[wallPosition.row - 1][wallPosition.col].wall.bottom = false;
+                }
+                if (wallPosition.side === 'right' && wallPosition.col < 6) {
+                    gameState.board[wallPosition.row][wallPosition.col + 1].wall.left = false;
+                }
+                if (wallPosition.side === 'bottom' && wallPosition.row < 6) {
+                    gameState.board[wallPosition.row + 1][wallPosition.col].wall.top = false;
+                }
+                if (wallPosition.side === 'left' && wallPosition.col > 0) {
+                    gameState.board[wallPosition.row][wallPosition.col - 1].wall.right = false;
+                }
+                
+                alert('Invalid wall placement: This would permanently separate the players!');
+                return;
+            }
 
-    // Check if this wall placement would separate players
-    if (!hasPathBetweenPlayers()) {
-        // Remove the wall if it would separate players
-        gameState.board[wallPosition.row][wallPosition.col].wall[wallPosition.side] = false;
-        
-        // Remove adjacent cell's wall
-        if (wallPosition.side === 'top' && wallPosition.row > 0) {
-            gameState.board[wallPosition.row - 1][wallPosition.col].wall.bottom = false;
-        }
-        if (wallPosition.side === 'right' && wallPosition.col < 6) {
-            gameState.board[wallPosition.row][wallPosition.col + 1].wall.left = false;
-        }
-        if (wallPosition.side === 'bottom' && wallPosition.row < 6) {
-            gameState.board[wallPosition.row + 1][wallPosition.col].wall.top = false;
-        }
-        if (wallPosition.side === 'left' && wallPosition.col > 0) {
-            gameState.board[wallPosition.row][wallPosition.col - 1].wall.right = false;
-        }
-        
-        alert('Invalid wall placement: This would permanently separate the players!');
-        return;
-    }
-
-    gameState.players[currentPlayer].abilitiesUsed.walls++;
-    addLogMessage(`${gameState.players[currentPlayer].name} placed a wall at (${params.row},${params.col}) on the ${wallPosition.side} side!`);
-    
-    // Force immediate rendering update to show the wall
-    renderGameBoard();
-    break;
+            gameState.players[currentPlayer].abilitiesUsed.walls++;
+            addLogMessage(`${gameState.players[currentPlayer].name} placed a wall at (${params.row},${params.col}) on the ${wallPosition.side} side!`);
+            
+            // Force immediate rendering update to show the wall
+            renderGameBoard();
+            break;
 
         case 'blocks':
             // Temporarily place the block
@@ -1095,6 +1096,9 @@ case 'walls':
             addLogMessage(`${gameState.players[currentPlayer].name} placed a block at (${params.row},${params.col})!`);
             break;
     }
+
+    // Check for turret damage after using any ability
+    checkTurretDamage();
 
     // Check for game over
     if (checkGameOver()) return;

@@ -1,15 +1,15 @@
 {
   "dev": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-abilityarena2-dev-ed305-authRole",
-      "UnauthRoleArn": "arn:aws:iam::682160081420:role/amplify-abilityarena2-dev-ed305-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::682160081420:role/amplify-abilityarena2-dev-ed305-authRole",
+      "AuthRoleName": "amplify-abilityarena3-dev-ea432-authRole",
+      "UnauthRoleArn": "arn:aws:iam::682160081420:role/amplify-abilityarena3-dev-ea432-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::682160081420:role/amplify-abilityarena3-dev-ea432-authRole",
       "Region": "us-east-1",
-      "DeploymentBucketName": "amplify-abilityarena2-dev-ed305-deployment",
-      "UnauthRoleName": "amplify-abilityarena2-dev-ed305-unauthRole",
-      "StackName": "amplify-abilityarena2-dev-ed305",
-      "StackId": "arn:aws:cloudformation:us-east-1:682160081420:stack/amplify-abilityarena2-dev-ed305/e11844b0-2554-11f0-b2d9-0afff9b52ddb",
-      "AmplifyAppId": "d2es1p54cb3hho"
+      "DeploymentBucketName": "amplify-abilityarena3-dev-ea432-deployment",
+      "UnauthRoleName": "amplify-abilityarena3-dev-ea432-unauthRole",
+      "StackName": "amplify-abilityarena3-dev-ea432",
+      "StackId": "arn:aws:cloudformation:us-east-1:682160081420:stack/amplify-abilityarena3-dev-ea432/bf95c5b0-25fe-11f0-8ebe-0affc0d36e9d",
+      "AmplifyAppId": "dwj9xw0rgagmx"
     },
     "categories": {
       "hosting": {

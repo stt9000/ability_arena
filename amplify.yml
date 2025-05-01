@@ -6,6 +6,7 @@ frontend:
         - npm ci
     build:
       commands:
+        - echo "Building version $(date +%Y%m%d-%H%M%S)"
         - npm run build
   artifacts:
     baseDirectory: dist
@@ -18,4 +19,8 @@ frontend:
     - pattern: '**/*'
       headers:
         - key: 'Cache-Control'
-          value: 'max-age=0, no-cache, no-store, must-revalidate' 
+          value: 'max-age=0, no-cache, no-store, must-revalidate'
+        - key: 'Pragma'
+          value: 'no-cache'
+        - key: 'Expires'
+          value: '0' 
