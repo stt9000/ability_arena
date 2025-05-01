@@ -55,7 +55,8 @@ function initializeScreens() {
     modals = {
         rules: document.getElementById('rulesModal'),
         gameOver: document.getElementById('gameOverModal'),
-        shield: document.getElementById('shieldModal')
+        shield: document.getElementById('shieldModal'),
+        validation: document.getElementById('validationModal')
     };
     
     gameBoard = document.getElementById('gameBoard');
@@ -615,34 +616,42 @@ function hasLineOfSight(pos1, pos2) {
 
 // Highlight valid targets for the selected ability
 function highlightAbilityTargets(ability) {
-    // Clear previous highlights
+    const currentPlayer = gameState.currentTurn;
+    const opponentNum = currentPlayer === 1 ? 2 : 1;
+    const playerPos = gameState.players[currentPlayer].position;
+    const opponentPos = gameState.players[opponentNum].position;
+
+    // Clear existing highlights
     const cells = document.querySelectorAll('.cell');
     cells.forEach(cell => cell.classList.remove('highlight'));
-    
-    const currentPlayer = gameState.currentTurn;
-    const position = gameState.players[currentPlayer].position;
-    const opponentNum = currentPlayer === 1 ? 2 : 1;
-    const opponentPos = gameState.players[opponentNum].position;
-    
+
     switch (ability) {
         case 'bow':
-            // Highlight cells within 2 spaces (including diagonals)
-            // First check if opponent is within range
-            const rowDiff = Math.abs(opponentPos.row - position.row);
-            const colDiff = Math.abs(opponentPos.col - position.col);
-            const distance = Math.max(rowDiff, colDiff); // Chess distance for diagonals
-            
-            if (distance <= 2) {
-                // Check line of sight (no blocks or walls in the way)
-                if (hasLineOfSight(position, opponentPos)) {
-                    const cell = document.querySelector(`.cell[data-row="${opponentPos.row}"][data-col="${opponentPos.col}"]`);
-                    if (cell) {
-                        cell.classList.add('highlight');
-                    }
+            // Highlight opponent if within 2 squares and visible
+            if (hasLineOfSight(playerPos, opponentPos)) {
+                const rowDiff = Math.abs(opponentPos.row - playerPos.row);
+                const colDiff = Math.abs(opponentPos.col - playerPos.col);
+                const distance = Math.max(rowDiff, colDiff);
+                if (distance <= 2) {
+                    const opponentCell = document.querySelector(`.cell[data-row="${opponentPos.row}"][data-col="${opponentPos.col}"]`);
+                    if (opponentCell) opponentCell.classList.add('highlight');
                 }
             }
             break;
-            
+
+        case 'crossbow':
+            // Highlight opponent if within 3 squares and visible
+            if (hasLineOfSight(playerPos, opponentPos)) {
+                const rowDiff = Math.abs(opponentPos.row - playerPos.row);
+                const colDiff = Math.abs(opponentPos.col - playerPos.col);
+                const distance = Math.max(rowDiff, colDiff);
+                if (distance <= 3) {
+                    const opponentCell = document.querySelector(`.cell[data-row="${opponentPos.row}"][data-col="${opponentPos.col}"]`);
+                    if (opponentCell) opponentCell.classList.add('highlight');
+                }
+            }
+            break;
+
         case 'sword':
             // Highlight adjacent cells (non-diagonal)
             const directions = [
@@ -653,18 +662,18 @@ function highlightAbilityTargets(ability) {
             ];
             
             directions.forEach(dir => {
-                const newRow = position.row + dir.row;
-                const newCol = position.col + dir.col;
+                const newRow = playerPos.row + dir.row;
+                const newCol = playerPos.col + dir.col;
                 
                 // Check if within bounds
                 if (newRow >= 0 && newRow < 7 && newCol >= 0 && newCol < 7) {
                     // Check for opponent
                     if (opponentPos.row === newRow && opponentPos.col === newCol) {
                         // Check for walls
-                        if (dir.row === -1 && gameState.board[position.row][position.col].wall.top) return;
-                        if (dir.row === 1 && gameState.board[position.row][position.col].wall.bottom) return;
-                        if (dir.col === -1 && gameState.board[position.row][position.col].wall.left) return;
-                        if (dir.col === 1 && gameState.board[position.row][position.col].wall.right) return;
+                        if (dir.row === -1 && gameState.board[playerPos.row][playerPos.col].wall.top) return;
+                        if (dir.row === 1 && gameState.board[playerPos.row][playerPos.col].wall.bottom) return;
+                        if (dir.col === -1 && gameState.board[playerPos.row][playerPos.col].wall.left) return;
+                        if (dir.col === 1 && gameState.board[playerPos.row][playerPos.col].wall.right) return;
                         
                         const cell = document.querySelector(`.cell[data-row="${newRow}"][data-col="${newCol}"]`);
                         if (cell) {
@@ -685,18 +694,18 @@ function highlightAbilityTargets(ability) {
             ];
             
             pushDirections.forEach(dir => {
-                const newRow = position.row + dir.row;
-                const newCol = position.col + dir.col;
+                const newRow = playerPos.row + dir.row;
+                const newCol = playerPos.col + dir.col;
                 
                 // Check if within bounds
                 if (newRow >= 0 && newRow < 7 && newCol >= 0 && newCol < 7) {
                     // Check for opponent
                     if (opponentPos.row === newRow && opponentPos.col === newCol) {
                         // Check for walls
-                        if (dir.row === -1 && gameState.board[position.row][position.col].wall.top) return;
-                        if (dir.row === 1 && gameState.board[position.row][position.col].wall.bottom) return;
-                        if (dir.col === -1 && gameState.board[position.row][position.col].wall.left) return;
-                        if (dir.col === 1 && gameState.board[position.row][position.col].wall.right) return;
+                        if (dir.row === -1 && gameState.board[playerPos.row][playerPos.col].wall.top) return;
+                        if (dir.row === 1 && gameState.board[playerPos.row][playerPos.col].wall.bottom) return;
+                        if (dir.col === -1 && gameState.board[playerPos.row][playerPos.col].wall.left) return;
+                        if (dir.col === 1 && gameState.board[playerPos.row][playerPos.col].wall.right) return;
                         
                         const cell = document.querySelector(`.cell[data-row="${newRow}"][data-col="${newCol}"]`);
                         if (cell) {
@@ -714,8 +723,8 @@ function highlightAbilityTargets(ability) {
                     // Check if cell is empty
                     if (!gameState.board[row][col].block && 
                         !gameState.board[row][col].turret && 
-                        !(gameState.players[1].position.row === row && gameState.players[1].position.col === col) && 
-                        !(gameState.players[2].position.row === row && gameState.players[2].position.col === col)) {
+                        !(playerPos.row === row && playerPos.col === col) && 
+                        !(opponentPos.row === row && opponentPos.col === col)) {
                         const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
                         if (cell) {
                             cell.classList.add('highlight');
@@ -749,8 +758,8 @@ function highlightAbilityTargets(ability) {
                     // Check if cell is empty
                     if (!gameState.board[row][col].block && 
                         !gameState.board[row][col].turret && 
-                        !(gameState.players[1].position.row === row && gameState.players[1].position.col === col) && 
-                        !(gameState.players[2].position.row === row && gameState.players[2].position.col === col)) {
+                        !(playerPos.row === row && playerPos.col === col) && 
+                        !(opponentPos.row === row && opponentPos.col === col)) {
                         const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
                         if (cell) {
                             cell.classList.add('highlight');
@@ -765,6 +774,7 @@ function highlightAbilityTargets(ability) {
 // Fixed movePlayer function - properly switches turns and ensures timer starts
 function movePlayer(row, col) {
     const currentPlayer = gameState.currentTurn;
+    const opponentNum = currentPlayer === 1 ? 2 : 1;
     const oldPosition = { ...gameState.players[currentPlayer].position };
     
     // Update player position
@@ -773,9 +783,6 @@ function movePlayer(row, col) {
     
     // Immediately update the UI to show movement
     renderGameBoard();
-    //  if (window.updateAbilityButtonHandlers) {
-    //    window.updateAbilityButtonHandlers();
-    //}
     updateAbilityButtonHandlers();
     
     // Log the move
@@ -784,13 +791,34 @@ function movePlayer(row, col) {
     // Reset lastPlacedBlock flag
     gameState.players[currentPlayer].lastPlacedBlock = false;
     
-    // Check for turret damage
+    // Check if player reached the final rank and award Cross Bow
+    const finalRank = currentPlayer === 1 ? 6 : 0; // Player 1's final rank is 6, Player 2's is 0
+    if (row === finalRank && !gameState.players[currentPlayer].abilities.includes('crossbow')) {
+        gameState.players[currentPlayer].abilities.push('crossbow');
+        addLogMessage(`${gameState.players[currentPlayer].name} reached the final rank and unlocked the Cross Bow ability!`);
+        updateAbilityButtons(); // Update UI to show new ability
+        
+        // Show the Cross Bow unlock modal
+        const crossbowModal = document.getElementById('crossbowModal');
+        crossbowModal.style.display = 'block';
+        
+        // Add event listener to close button if not already added
+        const closeButton = document.getElementById('closeCrossbowModal');
+        if (closeButton && !closeButton.hasEventListener) {
+            closeButton.addEventListener('click', () => {
+                crossbowModal.style.display = 'none';
+            });
+            closeButton.hasEventListener = true;
+        }
+    }
+    
+    // Check for turret damage after movement
     checkTurretDamage();
     
     // Check for game over
     if (checkGameOver()) return;
     
-    // Switch turn properly (call the actual function)
+    // Switch turn
     switchTurn();
 }
 
@@ -901,30 +929,32 @@ function useAbility(ability, params) {
 
     switch (ability) {
         case 'bow':
-            // Deal 35 damage to opponent if visible and in range
-            const bowDamage = 35; // Using value directly since we don't have ability data in this scope
+            // Deal 35 damage to opponent
+            const bowDamage = 35;
+            addLogMessage(`${gameState.players[currentPlayer].name} shot ${gameState.players[opponentNum].name} with a bow for ${bowDamage} damage!`);
 
-            // Check if opponent is in range and visible
-            const playerPos = gameState.players[currentPlayer].position;
-            const opponentPos = gameState.players[opponentNum].position;
+            // Check for shield option
+            const bowShieldUsed = applyDamageWithShieldOption(opponentNum, bowDamage, `${gameState.players[currentPlayer].name}'s bow`);
 
-            // Calculate distance
-            const rowDiff = Math.abs(opponentPos.row - playerPos.row);
-            const colDiff = Math.abs(opponentPos.col - playerPos.col);
-            const distance = Math.max(rowDiff, colDiff); // Chess distance
+            // If shield option was presented, we need to pause the turn switching
+            if (bowShieldUsed) {
+                gameState.pendingTurnSwitch = true; // We'll use this to delay the turn switch
+                return; // Exit the function early to prevent turn switch
+            }
+            break;
 
-            if (distance <= 2 && hasLineOfSight(playerPos, opponentPos)) {
-                addLogMessage(`${gameState.players[currentPlayer].name} shot an arrow at ${gameState.players[opponentNum].name} for ${bowDamage} damage!`);
-                // Check for shield option
-                const shieldUsed = applyDamageWithShieldOption(opponentNum, bowDamage, `${gameState.players[currentPlayer].name}'s bow`);
+        case 'crossbow':
+            // Deal 50 damage to opponent
+            const crossbowDamage = 50;
+            addLogMessage(`${gameState.players[currentPlayer].name} shot ${gameState.players[opponentNum].name} with a crossbow for ${crossbowDamage} damage!`);
 
-                // If shield option was presented, we need to pause the turn switching until shield decision is made
-                if (shieldUsed) {
-                    gameState.pendingTurnSwitch = true; // We'll use this to delay the turn switch
-                    return; // Exit the function early to prevent turn switch
-                }
-            } else {
-                addLogMessage(`${gameState.players[currentPlayer].name} tried to shoot an arrow but missed or couldn't see the target!`);
+            // Check for shield option
+            const crossbowShieldUsed = applyDamageWithShieldOption(opponentNum, crossbowDamage, `${gameState.players[currentPlayer].name}'s crossbow`);
+
+            // If shield option was presented, we need to pause the turn switching
+            if (crossbowShieldUsed) {
+                gameState.pendingTurnSwitch = true; // We'll use this to delay the turn switch
+                return; // Exit the function early to prevent turn switch
             }
             break;
 
@@ -1068,7 +1098,7 @@ function useAbility(ability, params) {
                     gameState.board[wallPosition.row][wallPosition.col - 1].wall.right = false;
                 }
                 
-                alert('Invalid wall placement: This would permanently separate the players!');
+                showValidationModal('Invalid wall placement: This would permanently separate the players!');
                 return;
             }
 
@@ -1087,7 +1117,7 @@ function useAbility(ability, params) {
             if (!hasPathBetweenPlayers()) {
                 // Remove the block if it would separate players
                 gameState.board[params.row][params.col].block = false;
-                alert('Invalid block placement: This would permanently separate the players!');
+                showValidationModal('Invalid block placement: This would permanently separate the players!');
                 return;
             }
             
@@ -1227,6 +1257,12 @@ function handleCellClick(row, col) {
     // Ability usage flow
     if (gameState.currentAction && gameState.currentAction.startsWith('ability-')) {
         const ability = gameState.currentAction.split('-')[1];
+        
+        // Prevent using Cross Bow if not unlocked
+        if (ability === 'crossbow' && !gameState.players[gameState.currentTurn].abilities.includes('crossbow')) {
+            return;
+        }
+        
         const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
         
         if (cell && cell.classList.contains('highlight')) {
@@ -1329,6 +1365,14 @@ function hasPathBetweenPlayers() {
     
     // Start DFS from player 1's position
     return dfs(player1Pos.row, player1Pos.col);
+}
+
+// Add function to show validation modal
+function showValidationModal(message) {
+    const validationModal = document.getElementById('validationModal');
+    const validationMessage = document.getElementById('validationMessage');
+    validationMessage.textContent = message;
+    validationModal.style.display = 'block';
 }
 
 // At the end of game-logic.js, add to your exports:
