@@ -80,6 +80,13 @@ export const abilityData = {
         range: 2,
         uses: Infinity
     },
+    crossbow: {
+        name: "Cross Bow",
+        damage: 50,
+        range: 3,
+        uses: Infinity,
+        unlocked: false
+    },
     sword: {
         name: "Sword",
         damage: 50,

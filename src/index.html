@@ -68,6 +68,12 @@
                     <div class="ability-description">Deals 35 damage from up to 2 squares away (non-diagonal). Unlimited uses.</div>
                 </div>
                 
+                <div class="ability-card" data-ability="crossbow" style="display: none;">
+                    <div class="ability-icon">🎯</div>
+                    <div class="ability-title">Cross Bow</div>
+                    <div class="ability-description">Deals 50 damage from up to 3 squares away (non-diagonal). Unlocked when reaching the final rank. Unlimited uses.</div>
+                </div>
+                
                 <div class="ability-card" data-ability="sword">
                     <div class="ability-icon">⚔️</div>
                     <div class="ability-title">Sword</div>
@@ -188,6 +194,7 @@
                     <h3>Abilities</h3>
                     <ul>
                         <li><strong>Bow and Arrow:</strong> Deals 35 damage to opponent if they are within 2 squares (non-diagonal). Unlimited uses.</li>
+                        <li><strong>Cross Bow:</strong> Deals 50 damage to opponent if they are within 3 squares (non-diagonal). Unlocked when reaching the final rank. Unlimited uses.</li>
                         <li><strong>Sword:</strong> Deals 50 damage to opponent if they are in an adjacent square (non-diagonal). Unlimited uses.</li>
                         <li><strong>Shield:</strong> Completely blocks any damage when activated. Can be used during the opponent's turn in response to an attack. Limited to 3 uses total throughout the game.</li>
                         <li><strong>Push:</strong> Pushes opponent 3 squares in a straight line. If this pushes them off the board, they are eliminated. Unlimited uses.</li>
@@ -223,16 +230,34 @@
     <script type="module" src="js/main.js"></script>
     
     <!-- Shield Activation Modal -->
-<div id="shieldModal" class="modal">
-    <div class="modal-content shield-modal">
-        <h2>Shield Activation</h2>
-        <p id="shieldMessage">You are about to take damage! Use your shield?</p>
-        <p id="shieldUsesRemaining">Shield uses remaining: <span id="shieldCountDisplay">0</span></p>
-        <div class="shield-actions">
-            <button id="useShield" class="btn-large">Yes, Use Shield</button>
-            <button id="declineShield" class="btn-large">No, Take Damage</button>
+    <div id="shieldModal" class="modal">
+        <div class="modal-content shield-modal">
+            <h2>Shield Activation</h2>
+            <p id="shieldMessage">You are about to take damage! Use your shield?</p>
+            <p id="shieldUsesRemaining">Shield uses remaining: <span id="shieldCountDisplay">0</span></p>
+            <div class="shield-actions">
+                <button id="useShield" class="btn-large">Yes, Use Shield</button>
+                <button id="declineShield" class="btn-large">No, Take Damage</button>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- Cross Bow Unlock Modal -->
+    <div id="crossbowModal" class="modal">
+        <div class="modal-content">
+            <h2>New Ability Unlocked!</h2>
+            <p>Congratulations for making it this far. You have earned the Cross Bow.</p>
+            <button id="closeCrossbowModal" class="btn-large">Continue</button>
+        </div>
+    </div>
+
+    <!-- Validation Modal -->
+    <div id="validationModal" class="modal">
+        <div class="modal-content">
+            <h2>Validation Error</h2>
+            <p id="validationMessage"></p>
+            <button id="closeValidationModal" class="btn-large">OK</button>
+        </div>
+    </div>
 </body>
 </html>

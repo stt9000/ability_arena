@@ -83,11 +83,15 @@ function handleInitError(error, reject) {
     
     // Display user-friendly error message in UI
     const errorMessage = document.createElement('div');
-    errorMessage.className = 'error-message';
+    errorMessage.className = 'modal';
+    errorMessage.style.display = 'block';
     errorMessage.innerHTML = `
-        <h2>Game Initialization Error</h2>
-        <p>Sorry, there was a problem starting the game. Please refresh the page to try again.</p>
-        <p>Technical details: ${error.message}</p>
+        <div class="modal-content">
+            <h2>Game Initialization Error</h2>
+            <p>Sorry, there was a problem starting the game. Please refresh the page to try again.</p>
+            <p>Technical details: ${error.message}</p>
+            <button onclick="window.location.reload()" class="btn-large">Refresh Page</button>
+        </div>
     `;
     
     // Find a good place to show the error
