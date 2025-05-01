@@ -190,7 +190,7 @@ function setupEventListeners() {
     
     buttons.createGame.addEventListener('click', function() {
         if (inputs.playerName.value.trim() === '') {
-            alert('Please enter your name!');
+            showValidationModal('Please enter your name!');
             return;
         }
         
@@ -202,7 +202,7 @@ function setupEventListeners() {
     
     buttons.joinGame.addEventListener('click', function() {
         if (inputs.playerName.value.trim() === '') {
-            alert('Please enter your name!');
+            showValidationModal('Please enter your name!');
             return;
         }
         
@@ -219,7 +219,7 @@ function setupEventListeners() {
     
     buttons.joinGameBtn.addEventListener('click', function() {
         if (inputs.playerName.value.trim() === '' || inputs.joinGameId.value.trim() === '') {
-            alert('Please enter your name and a valid game ID!');
+            showValidationModal('Please enter your name and a valid game ID!');
             return;
         }
         
@@ -228,6 +228,11 @@ function setupEventListeners() {
         
         // Show ability selection screen for player 2
         showScreen('abilitySelection');
+    });
+
+    // Add validation modal close handler
+    document.getElementById('closeValidationModal').addEventListener('click', function() {
+        document.getElementById('validationModal').style.display = 'none';
     });
 
     // Ability Selection Screen Handlers
@@ -615,3 +620,11 @@ function setupAbilityButtonHandlers() {
 // Export the setupAbilityButtonHandlers function
 export { setupAbilityButtonHandlers as updateAbilityButtonHandlers };
 export { buttons };
+
+// Add function to show validation modal
+function showValidationModal(message) {
+    const validationModal = document.getElementById('validationModal');
+    const validationMessage = document.getElementById('validationMessage');
+    validationMessage.textContent = message;
+    validationModal.style.display = 'block';
+}
