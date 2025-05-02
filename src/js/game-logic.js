@@ -806,23 +806,9 @@ function movePlayer(row, col) {
     
     // Check if player reached the final rank and award Cross Bow
     const finalRank = currentPlayer === 1 ? 6 : 0; // Player 1's final rank is 6, Player 2's is 0
-    if (row === finalRank && !gameState.players[currentPlayer].abilities.includes('crossbow')) {
-        gameState.players[currentPlayer].abilities.push('crossbow');
-        addLogMessage(`${gameState.players[currentPlayer].name} reached the final rank and unlocked the Cross Bow ability!`);
-        updateAbilityButtons(); // Update UI to show new ability
-        
-        // Show the Cross Bow unlock modal
-        const crossbowModal = document.getElementById('crossbowModal');
-        crossbowModal.style.display = 'block';
-        
-        // Add event listener to close button if not already added
-        const closeButton = document.getElementById('closeCrossbowModal');
-        if (closeButton && !closeButton.hasEventListener) {
-            closeButton.addEventListener('click', () => {
-                crossbowModal.style.display = 'none';
-            });
-            closeButton.hasEventListener = true;
-        }
+    if (row === finalRank && gameState.players[currentPlayer].abilities.length === 2) {
+        triggerThirdAbilitySelection(currentPlayer);
+        return; // Pause turn flow until ability is picked
     }
     
     // Check for turret damage after movement
@@ -1398,6 +1384,18 @@ function showValidationModal(message) {
     validationModal.style.display = 'block';
 }
 
+// Function to trigger third ability selection
+function triggerThirdAbilitySelection(playerNum) {
+    // Create and dispatch the third ability selection event
+    const event = new CustomEvent('thirdAbilitySelection', {
+        detail: { playerNum: playerNum }
+    });
+    document.dispatchEvent(event);
+    
+    // Add log message
+    addLogMessage(`${gameState.players[playerNum].name} reached the final rank! Choose your third ability.`);
+}
+
 // At the end of game-logic.js, add to your exports:
 export { 
     showScreen, 
@@ -1417,7 +1415,8 @@ export {
     applyDamageWithShieldOption,
     showGameOverModal,
     handlePlayerClick,
-    handleCellClick
+    handleCellClick,
+    triggerThirdAbilitySelection
 };
 
 

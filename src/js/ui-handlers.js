@@ -507,9 +507,129 @@ function setupEventListeners() {
         // Clear game log
         document.querySelector('.game-log').innerHTML = '';
         
-        // Go back to ability selection
+        // Reset ability selection UI
+        selectedAbilities = [];
+        const abilityCards = document.querySelectorAll('.ability-card');
+        abilityCards.forEach(card => card.classList.remove('selected'));
+        buttons.confirmAbilities.textContent = 'Confirm Abilities (0/2 selected)';
+        buttons.confirmAbilities.disabled = true;
+        
+        // Show ability selection screen for player 1
         showScreen('abilitySelection');
         document.getElementById('gameOverModal').style.display = 'none';
+        
+        // Update ability selection screen message
+        document.querySelector('#abilitySelectionScreen h2').textContent = `${gameState.players[1].name}, Select Your Abilities`;
+        
+        // Function to setup ability card click handlers
+        function setupAbilityCardHandlers() {
+            document.querySelectorAll('.ability-card').forEach(card => {
+                // Remove any existing click handlers
+                const newCard = card.cloneNode(true);
+                card.parentNode.replaceChild(newCard, card);
+                
+                // Add click handler
+                newCard.addEventListener('click', function() {
+                    const ability = this.dataset.ability;
+                    
+                    if (this.classList.contains('selected')) {
+                        // Deselect
+                        this.classList.remove('selected');
+                        selectedAbilities = selectedAbilities.filter(a => a !== ability);
+                    } else {
+                        // Select (if less than 2 abilities are already selected)
+                        if (selectedAbilities.length < 2) {
+                            this.classList.add('selected');
+                            selectedAbilities.push(ability);
+                        } else {
+                            const abilityMessage = document.getElementById('abilityMessage');
+                            abilityMessage.textContent = "You can only select 2 abilities!";
+                            abilityMessage.className = "message error";
+                            abilityMessage.style.display = "block";
+                            setTimeout(() => {
+                                abilityMessage.style.display = "none";
+                            }, 3000);
+                            return;
+                        }
+                    }
+                    
+                    // Update confirm button
+                    buttons.confirmAbilities.textContent = `Confirm Abilities (${selectedAbilities.length}/2 selected)`;
+                    buttons.confirmAbilities.disabled = selectedAbilities.length !== 2;
+                });
+            });
+        }
+        
+        // Setup initial ability card handlers for player 1
+        setupAbilityCardHandlers();
+        
+        // Remove any existing click handler from confirm button
+        const oldConfirmBtn = buttons.confirmAbilities;
+        const newConfirmBtn = oldConfirmBtn.cloneNode(true);
+        oldConfirmBtn.parentNode.replaceChild(newConfirmBtn, oldConfirmBtn);
+        buttons.confirmAbilities = newConfirmBtn;
+        
+        // Add click handler for player 1's ability confirmation
+        buttons.confirmAbilities.addEventListener('click', function player1ConfirmHandler() {
+            if (selectedAbilities.length !== 2) {
+                const abilityMessage = document.getElementById('abilityMessage');
+                abilityMessage.textContent = "Please select exactly 2 abilities!";
+                abilityMessage.className = "message error";
+                abilityMessage.style.display = "block";
+                return;
+            }
+            
+            // Assign abilities to player 1
+            gameState.players[1].abilities = [...selectedAbilities];
+            
+            // Reset selection for player 2
+            selectedAbilities = [];
+            document.querySelectorAll('.ability-card').forEach(card => card.classList.remove('selected'));
+            buttons.confirmAbilities.textContent = 'Confirm Abilities (0/2 selected)';
+            buttons.confirmAbilities.disabled = true;
+            
+            // Update ability selection screen for player 2
+            document.querySelector('#abilitySelectionScreen h2').textContent = `${gameState.players[2].name}, Select Your Abilities`;
+            
+            // Setup ability card handlers for player 2
+            setupAbilityCardHandlers();
+            
+            // Remove this handler and add player 2's handler
+            buttons.confirmAbilities.removeEventListener('click', player1ConfirmHandler);
+            
+            // Add click handler for player 2's ability confirmation
+            buttons.confirmAbilities.addEventListener('click', function player2ConfirmHandler() {
+                if (selectedAbilities.length !== 2) {
+                    const abilityMessage = document.getElementById('abilityMessage');
+                    abilityMessage.textContent = "Please select exactly 2 abilities!";
+                    abilityMessage.className = "message error";
+                    abilityMessage.style.display = "block";
+                    return;
+                }
+                
+                // Assign abilities to player 2
+                gameState.players[2].abilities = [...selectedAbilities];
+                
+                // Start the game
+                showScreen('game');
+                renderGameBoard();
+                updateUI();
+                startTimer();
+                
+                // Add initial log messages
+                addLogMessage(`${gameState.players[1].name} vs ${gameState.players[2].name}`);
+                addLogMessage(`${gameState.players[1].name} chose: ${gameState.players[1].abilities.map(getAbilityName).join(', ')}`);
+                addLogMessage(`${gameState.players[2].name} chose: ${gameState.players[2].abilities.map(getAbilityName).join(', ')}`);
+                addLogMessage(`${gameState.players[gameState.currentTurn].name} goes first!`);
+                
+                // Enable action buttons
+                buttons.move.disabled = false;
+                buttons.useAbility.disabled = false;
+                
+                // Set up ability button handlers
+                setupAbilityButtonHandlers();
+            });
+        });
     });
     
     buttons.returnToLobby.addEventListener('click', function() {
@@ -607,6 +727,103 @@ function setupEventListeners() {
                 shieldButtons.declineShield.click();
             }
         }
+    });
+
+    // Always hide the crossbow card in ability selection
+    document.addEventListener('DOMContentLoaded', function() {
+        const crossbowCard = document.querySelector('.ability-card[data-ability="crossbow"]');
+        if (crossbowCard) crossbowCard.style.display = 'none';
+    });
+
+    // Also hide crossbow card at the start of any ability selection setup
+    function hideCrossbowCard() {
+        const crossbowCard = document.querySelector('.ability-card[data-ability="crossbow"]');
+        if (crossbowCard) crossbowCard.style.display = 'none';
+    }
+
+    // Listen for third ability selection event
+    document.addEventListener('thirdAbilitySelection', function(e) {
+        const playerNum = e.detail.playerNum;
+        selectedAbilities = [];
+        document.querySelectorAll('.ability-card').forEach(card => {
+            card.classList.remove('selected');
+            // Hide crossbow and already owned abilities
+            if (card.dataset.ability === 'crossbow' || gameState.players[playerNum].abilities.includes(card.dataset.ability)) {
+                card.style.display = 'none';
+            } else {
+                card.style.display = '';
+            }
+        });
+        hideCrossbowCard();
+        // Update UI text
+        document.querySelector('#abilitySelectionScreen h2').textContent = `${gameState.players[playerNum].name}, Select Your Third Ability`;
+        const abilityMessage = document.getElementById('abilityMessage');
+        abilityMessage.textContent = "Pick 1 new ability (not one you already have)";
+        abilityMessage.className = "message";
+        abilityMessage.style.display = "block";
+        // Update confirm button
+        buttons.confirmAbilities.textContent = `Confirm Ability (0/1 selected)`;
+        buttons.confirmAbilities.disabled = true;
+
+        // Show the ability selection screen
+        showScreen('abilitySelection');
+
+        // Remove any existing click handlers from ability cards
+        document.querySelectorAll('.ability-card').forEach(card => {
+            const newCard = card.cloneNode(true);
+            card.parentNode.replaceChild(newCard, card);
+        });
+
+        // Set up new click handlers for ability cards
+        document.querySelectorAll('.ability-card').forEach(card => {
+            if (card.style.display !== 'none') {  // Only add handlers to visible cards
+                card.addEventListener('click', function() {
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        selectedAbilities = [];
+                    } else {
+                        document.querySelectorAll('.ability-card').forEach(c => c.classList.remove('selected'));
+                        this.classList.add('selected');
+                        selectedAbilities = [this.dataset.ability];
+                    }
+                    buttons.confirmAbilities.textContent = `Confirm Ability (${selectedAbilities.length}/1 selected)`;
+                    buttons.confirmAbilities.disabled = selectedAbilities.length !== 1;
+                });
+            }
+        });
+
+        // Remove any existing click handler from confirm button
+        const oldConfirmBtn = buttons.confirmAbilities;
+        const newConfirmBtn = oldConfirmBtn.cloneNode(true);
+        oldConfirmBtn.parentNode.replaceChild(newConfirmBtn, oldConfirmBtn);
+        buttons.confirmAbilities = newConfirmBtn;
+
+        // Add new click handler for confirm button
+        buttons.confirmAbilities.addEventListener('click', function() {
+            if (selectedAbilities.length !== 1) {
+                abilityMessage.textContent = "Please select exactly 1 new ability!";
+                abilityMessage.className = "message error";
+                abilityMessage.style.display = "block";
+                return;
+            }
+            // Add the new ability
+            gameState.players[playerNum].abilities.push(selectedAbilities[0]);
+            // Reset UI
+            selectedAbilities = [];
+            document.querySelectorAll('.ability-card').forEach(card => card.classList.remove('selected'));
+            // Hide ability selection and return to game
+            showScreen('game');
+            renderGameBoard();
+            updateUI();
+            // Continue the turn (switch turn, etc.)
+            gameState.thirdAbilitySelection = null;
+            // Add log message about the new ability
+            addLogMessage(`${gameState.players[playerNum].name} gained a new ability: ${getAbilityName(selectedAbilities[0])}`);
+            // Switch turn to the other player
+            switchTurn();
+            // Update ability buttons after turn switch
+            updateAbilityButtons();
+        });
     });
 }
 
